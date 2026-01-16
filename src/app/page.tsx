@@ -162,8 +162,10 @@ export default function Page() {
       ===================== */}
       <Card>
         <CardHeader className="items-center">
-          <CardTitle>Seguimiento de Leads</CardTitle>
-          <CardDescription>Texas · Área 214</CardDescription>
+          <CardTitle>Seguimiento de Leads sin Tareas</CardTitle>
+          <CardDescription>
+            Texas · Contactos con teléfono área 214
+          </CardDescription>
         </CardHeader>
 
         <CardContent>
@@ -184,7 +186,6 @@ export default function Page() {
                 innerRadius={70}
                 strokeWidth={5}
               >
-                {/* 🔥 AQUÍ ESTÁ LA MAGIA */}
                 {chartData.map((entry) => (
                   <Cell key={entry.key} fill={chartConfig[entry.key].color} />
                 ))}
@@ -192,10 +193,13 @@ export default function Page() {
                 <Label
                   content={({ viewBox }) => {
                     if (!viewBox) return null;
+
+                    const { cx, cy } = viewBox as any;
+
                     return (
                       <text
-                        x={viewBox.cx}
-                        y={viewBox.cy}
+                        x={cx}
+                        y={cy}
                         textAnchor="middle"
                         dominantBaseline="middle"
                       >
@@ -203,8 +207,8 @@ export default function Page() {
                           {total}
                         </tspan>
                         <tspan
-                          x={viewBox.cx}
-                          y={viewBox.cy + 22}
+                          x={cx}
+                          y={cy + 22}
                           className="fill-muted-foreground text-sm"
                         >
                           Leads
