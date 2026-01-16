@@ -2,17 +2,24 @@
 
 import { useState } from "react";
 
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+
 type SyncResult = {
   success: boolean;
   fetched?: number;
   inserted?: number;
   error?: string;
+  contacts?: any;
+  tasks?: any;
 };
 
 export default function ActionsPage() {
-  const [loading, setLoading] = useState<null | "contacts" | "tasks" | "all">(
-    null
-  );
+  const [loading, setLoading] = useState<null | "contacts" | "tasks" | "all">(null);
   const [result, setResult] = useState<SyncResult | null>(null);
 
   async function run(action: "contacts" | "tasks" | "all") {
@@ -20,96 +27,120 @@ export default function ActionsPage() {
       setLoading(action);
       setResult(null);
 
-      let response: Response | null = null;
       let data: any = null;
 
       if (action === "contacts") {
-        response = await fetch("/api/ghl/sync-contacts", {
-          method: "POST",
-        });
-        data = await response.json();
+        const res = await fetch("/api/ghl/sync-contacts", { method: "POST" });
+        data = await res.json();
       }
 
       if (action === "tasks") {
-        response = await fetch("/api/ghl/sync-tasks", {
-          method: "POST",
-        });
-        data = await response.json();
+        const res = await fetch("/api/ghl/sync-tasks", { method: "POST" });
+        data = await res.json();
       }
 
       if (action === "all") {
-        const contactsRes = await fetch("/api/ghl/sync-contacts", {
-          method: "POST",
-        });
-        const contactsData = await contactsRes.json();
-
-        const tasksRes = await fetch("/api/ghl/sync-tasks", {
-          method: "POST",
-        });
-        const tasksData = await tasksRes.json();
+        const contactsRes = await fetch("/api/ghl/sync-contacts", { method: "POST" });
+        const tasksRes = await fetch("/api/ghl/sync-tasks", { method: "POST" });
 
         data = {
           success: true,
-          contacts: contactsData,
-          tasks: tasksData,
+          contacts: await contactsRes.json(),
+          tasks: await tasksRes.json(),
         };
       }
 
       setResult(data);
     } catch (error: any) {
-      setResult({
-        success: false,
-        error: error.message,
-      });
+      setResult({ success: false, error: error.message });
     } finally {
       setLoading(null);
     }
   }
 
   return (
-    <div style={{ padding: 32, maxWidth: 800 }}>
-      <h1>Actions</h1>
-      <p>Manual sync controls for GoHighLevel</p>
+    <div className="p-8 max-w-3xl mx-auto space-y-6">
+      {/* HEADER */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-2xl">Acciones de Sincronización</CardTitle>
+          <CardDescription>
+            Controles manuales para sincronizar contactos y tareas desde GoHighLevel
+          </CardDescription>
+        </CardHeader>
+      </Card>
 
-      {/* BOTONES */}
-      <div style={{ display: "flex", gap: 16, marginTop: 24 }}>
-        <button onClick={() => run("contacts")} disabled={!!loading}>
-          {loading === "contacts" ? "Syncing contacts..." : "Sync Contacts"}
-        </button>
+      {/* ACTIONS */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Ejecutar sincronización</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex flex-wrap gap-3">
+            <Button
+              onClick={() => run("contacts")}
+              disabled={!!loading}
+              variant="secondary"
+            >
+              {loading === "contacts" ? "Sincronizando contactos…" : "Sync Contacts"}
+            </Button>
 
-        <button onClick={() => run("tasks")} disabled={!!loading}>
-          {loading === "tasks" ? "Syncing tasks..." : "Sync Tasks"}
-        </button>
+            <Button
+              onClick={() => run("tasks")}
+              disabled={!!loading}
+              variant="secondary"
+            >
+              {loading === "tasks" ? "Sincronizando tareas…" : "Sync Tasks"}
+            </Button>
 
-        <button onClick={() => run("all")} disabled={!!loading}>
-          {loading === "all" ? "Syncing all..." : "Sync All"}
-        </button>
-      </div>
+            <Button
+              onClick={() => run("all")}
+              disabled={!!loading}
+            >
+              {loading === "all" ? "Sincronizando todo…" : "Sync All"}
+            </Button>
+          </div>
 
-      {/* LOADING */}
-      {loading && (
-        <div style={{ marginTop: 24 }}>
-          <p>⏳ Sync in progress… this may take a few minutes.</p>
-          <progress style={{ width: "100%" }} />
-        </div>
-      )}
+          {loading && (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Badge variant="outline">En progreso</Badge>
+                Esto puede tardar unos minutos
+              </div>
+              <Progress value={70} />
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
-      {/* RESULTADO */}
+      {/* RESULT */}
       {result && (
-        <div style={{ marginTop: 24 }}>
-          <h3>Result</h3>
-          <pre
-            style={{
-              background: "#111",
-              color: "#0f0",
-              padding: 16,
-              borderRadius: 6,
-              overflow: "auto",
-            }}
-          >
-            {JSON.stringify(result, null, 2)}
-          </pre>
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Resultado</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {result.success ? (
+              <Alert>
+                <AlertTitle>✅ Sincronización completada</AlertTitle>
+                <AlertDescription>
+                  El proceso terminó correctamente.
+                </AlertDescription>
+              </Alert>
+            ) : (
+              <Alert variant="destructive">
+                <AlertTitle>❌ Error</AlertTitle>
+                <AlertDescription>{result.error}</AlertDescription>
+              </Alert>
+            )}
+
+            <Separator />
+
+            <pre className="bg-muted rounded-md p-4 text-xs overflow-auto">
+              {JSON.stringify(result, null, 2)}
+            </pre>
+          </CardContent>
+        </Card>
       )}
     </div>
   );
